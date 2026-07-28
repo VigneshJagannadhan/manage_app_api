@@ -19,6 +19,7 @@ export interface ITask extends Document {
   dueDate?: Date;
   dueTime?: string;
   createdAt: Date;
+  userId: string;
 }
 
 const taskSchema = new Schema<ITask>({
@@ -29,6 +30,7 @@ const taskSchema = new Schema<ITask>({
   dueDate: { type: Date, required: false },
   dueTime: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
+  userId: { type: String, required: true },
 });
 
 export const Task = model<ITask>('Task', taskSchema);
