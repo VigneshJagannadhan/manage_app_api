@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Task, TaskPriority, TaskStatus } from '../models/task.model';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 const DUE_TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -7,7 +8,7 @@ function isValidDueTime(dueTime: unknown): dueTime is string {
   return typeof dueTime === 'string' && DUE_TIME_REGEX.test(dueTime);
 }
 
-export async function createTask(req: Request, res: Response): Promise<void> {
+export async function createTask(req: AuthenticatedRequest, res: Response): Promise<void> {
   const { title, description, priority, status, createdAt, dueDate, dueTime } = req.body;
 
   if (!title || !description || !priority) {
@@ -34,6 +35,7 @@ export async function createTask(req: Request, res: Response): Promise<void> {
     title,
     description,
     priority,
+    userId: req.userId,
     ...(status ? { status } : {}),
     ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
     ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
@@ -43,7 +45,7 @@ export async function createTask(req: Request, res: Response): Promise<void> {
   res.status(201).json(task);
 }
 
-export async function listTasks(req: Request, res: Response): Promise<void> {
+export async function listTasks(req: AuthenticatedRequest, res: Response): Promise<void> {
   const { status } = req.query;
 
   if (status !== undefined && !Object.values(TaskStatus).includes(status as TaskStatus)) {
@@ -52,6 +54,7 @@ export async function listTasks(req: Request, res: Response): Promise<void> {
   }
 
   const filter = {
+    userId: req.userId,
     ...(status !== undefined ? { status } : {}),
   };
 
@@ -59,7 +62,7 @@ export async function listTasks(req: Request, res: Response): Promise<void> {
   res.status(200).json(tasks);
 }
 
-export async function updateTask(req: Request, res: Response): Promise<void> {
+export async function updateTask(req: AuthenticatedRequest, res: Response): Promise<void> {
   const { id } = req.params;
   const { title, description, priority, status, createdAt, dueDate, dueTime } = req.body;
 
@@ -88,7 +91,10 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
     ...(dueTime !== undefined ? { dueTime: dueTime || null } : {}),
   };
 
-  const task = await Task.findByIdAndUpdate(id, update, { new: true, runValidators: true });
+  const task = await Task.findOneAndUpdate({ _id: id, userId: req.userId }, update, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!task) {
     res.status(404).json({ message: 'task not found' });
@@ -98,10 +104,10 @@ export async function updateTask(req: Request, res: Response): Promise<void> {
   res.status(200).json(task);
 }
 
-export async function deleteTask(req: Request, res: Response): Promise<void> {
+export async function deleteTask(req: AuthenticatedRequest, res: Response): Promise<void> {
   const { id } = req.params;
 
-  const task = await Task.findByIdAndDelete(id);
+  const task = await Task.findOneAndDelete({ _id: id, userId: req.userId });
 
   if (!task) {
     res.status(404).json({ message: 'task not found' });
