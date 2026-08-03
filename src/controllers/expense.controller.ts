@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { Expense, ExpenseCategory, IExpensePayer, IExpenseSplit } from '../models/expense.model';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { GroupScopedRequest } from '../middleware/group.middleware';
+import { areAllGroupMembers, getUserGroupIds, isGroupMember } from '../utils/membership';
 
 function isValidCategory(category: unknown): category is ExpenseCategory {
   return typeof category === 'string' && Object.values(ExpenseCategory).includes(category as ExpenseCategory);
@@ -15,8 +17,8 @@ function isValidPayer(payer: unknown): boolean {
     return false;
   }
 
-  const { contactId } = payer as IExpensePayer;
-  return contactId === null || contactId === undefined || typeof contactId === 'string';
+  const { userId } = payer as IExpensePayer;
+  return typeof userId === 'string' && userId.length > 0;
 }
 
 function isValidSplits(splits: unknown): boolean {
@@ -33,14 +35,14 @@ function isValidSplits(splits: unknown): boolean {
       return false;
     }
 
-    const { contactId, amountOwed } = split as IExpenseSplit;
-    const validContactId = contactId === null || contactId === undefined || typeof contactId === 'string';
-    return validContactId && typeof amountOwed === 'number';
+    const { userId, amountOwed } = split as IExpenseSplit;
+    return typeof userId === 'string' && userId.length > 0 && typeof amountOwed === 'number';
   });
 }
 
-export async function createExpense(req: AuthenticatedRequest, res: Response): Promise<void> {
+export async function createExpense(req: GroupScopedRequest, res: Response): Promise<void> {
   const { title, amount, category, date, payer, splits } = req.body;
+  const groupId = req.groupId as string;
 
   if (title !== undefined && typeof title !== 'string') {
     res.status(400).json({ message: 'title must be a string' });
@@ -94,7 +96,16 @@ export async function createExpense(req: AuthenticatedRequest, res: Response): P
   }
 
   if (!isValidSplits(splits)) {
-    res.status(400).json({ message: 'splits must be an array of { contactId, amountOwed } entries' });
+    res.status(400).json({ message: 'splits must be an array of { userId, amountOwed } entries' });
+    return;
+  }
+
+  const resolvedPayer: IExpensePayer = payer ?? { userId: req.userId as string };
+  const resolvedSplits: IExpenseSplit[] = splits ?? [];
+
+  const membersToCheck = [resolvedPayer.userId, ...resolvedSplits.map((split) => split.userId)];
+  if (!(await areAllGroupMembers(groupId, membersToCheck))) {
+    res.status(422).json({ message: 'payer and all splits must reference members of this group' });
     return;
   }
 
@@ -103,24 +114,41 @@ export async function createExpense(req: AuthenticatedRequest, res: Response): P
     amount,
     category,
     date: parsedDate,
+    groupId,
     userId: req.userId,
-    ...(payer !== undefined ? { payer } : {}),
-    ...(splits !== undefined ? { splits } : {}),
+    payer: resolvedPayer,
+    splits: resolvedSplits,
   });
 
   res.status(201).json(expense);
 }
 
 export async function listExpenses(req: AuthenticatedRequest, res: Response): Promise<void> {
-  const { category } = req.query;
+  const { category, groupId } = req.query;
 
   if (category !== undefined && !isValidCategory(category)) {
     res.status(400).json({ message: `category must be one of ${Object.values(ExpenseCategory).join(', ')}` });
     return;
   }
 
+  if (groupId !== undefined && typeof groupId !== 'string') {
+    res.status(400).json({ message: 'groupId must be a string' });
+    return;
+  }
+
+  let groupFilter: Record<string, unknown>;
+  if (groupId !== undefined) {
+    if (!(await isGroupMember(groupId, req.userId as string))) {
+      res.status(403).json({ message: 'you are not a member of this group' });
+      return;
+    }
+    groupFilter = { groupId };
+  } else {
+    groupFilter = { groupId: { $in: await getUserGroupIds(req.userId as string) } };
+  }
+
   const filter = {
-    userId: req.userId,
+    ...groupFilter,
     ...(category !== undefined ? { category } : {}),
   };
 
@@ -128,9 +156,10 @@ export async function listExpenses(req: AuthenticatedRequest, res: Response): Pr
   res.status(200).json(expenses);
 }
 
-export async function updateExpense(req: AuthenticatedRequest, res: Response): Promise<void> {
+export async function updateExpense(req: GroupScopedRequest, res: Response): Promise<void> {
   const { id } = req.params;
   const { title, amount, category, date } = req.body;
+  const groupId = req.groupId;
 
   if (title !== undefined && typeof title !== 'string') {
     res.status(400).json({ message: 'title must be a string' });
@@ -183,7 +212,7 @@ export async function updateExpense(req: AuthenticatedRequest, res: Response): P
     ...(parsedDate !== undefined ? { date: parsedDate } : {}),
   };
 
-  const expense = await Expense.findOneAndUpdate({ _id: id, userId: req.userId }, update, {
+  const expense = await Expense.findOneAndUpdate({ _id: id, groupId }, update, {
     new: true,
     runValidators: true,
   });
@@ -196,10 +225,10 @@ export async function updateExpense(req: AuthenticatedRequest, res: Response): P
   res.status(200).json(expense);
 }
 
-export async function deleteExpense(req: AuthenticatedRequest, res: Response): Promise<void> {
+export async function deleteExpense(req: GroupScopedRequest, res: Response): Promise<void> {
   const { id } = req.params;
 
-  const expense = await Expense.findOneAndDelete({ _id: id, userId: req.userId });
+  const expense = await Expense.findOneAndDelete({ _id: id, groupId: req.groupId });
 
   if (!expense) {
     res.status(404).json({ message: 'expense not found' });

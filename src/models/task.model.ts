@@ -19,7 +19,9 @@ export interface ITask extends Document {
   dueDate?: Date;
   dueTime?: string;
   createdAt: Date;
-  userId: string;
+  groupId: string;
+  createdBy: string;
+  assignedTo: string;
 }
 
 const taskSchema = new Schema<ITask>({
@@ -30,7 +32,11 @@ const taskSchema = new Schema<ITask>({
   dueDate: { type: Date, required: false },
   dueTime: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
-  userId: { type: String, required: true },
+  groupId: { type: String, required: true },
+  createdBy: { type: String, required: true },
+  assignedTo: { type: String, required: true },
 });
+
+taskSchema.index({ groupId: 1, createdAt: -1 });
 
 export const Task = model<ITask>('Task', taskSchema);
