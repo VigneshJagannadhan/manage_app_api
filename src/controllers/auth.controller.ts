@@ -59,14 +59,18 @@ export async function signin(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  console.log('[signin] looking up user', email);
   const user = await User.findOne({ email: email.toLowerCase() });
+  console.log('[signin] user found:', !!user);
 
   if (!user || !(await user.comparePassword(password))) {
     res.status(401).json({ message: 'invalid email or password' });
     return;
   }
 
+  console.log('[signin] password ok, issuing tokens');
   const { accessToken, refreshToken } = await issueTokens(user.id, user.email);
+  console.log('[signin] tokens issued');
 
   res.status(200).json({
     user: { id: user.id, name: user.name, email: user.email },
