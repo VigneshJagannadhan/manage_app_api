@@ -88,6 +88,7 @@ export async function listTasks(req: AuthenticatedRequest, res: Response): Promi
 
   const filter = {
     ...groupFilter,
+    $or: [{ assignedTo: req.userId }, { createdBy: req.userId }],
     ...(status !== undefined ? { status } : {}),
   };
 
@@ -136,10 +137,11 @@ export async function updateTask(req: GroupScopedRequest, res: Response): Promis
     ...(assignedTo !== undefined ? { assignedTo } : {}),
   };
 
-  const task = await Task.findOneAndUpdate({ _id: id, groupId }, update, {
-    new: true,
-    runValidators: true,
-  });
+  const task = await Task.findOneAndUpdate(
+    { _id: id, groupId, $or: [{ assignedTo: req.userId }, { createdBy: req.userId }] },
+    update,
+    { new: true, runValidators: true },
+  );
 
   if (!task) {
     res.status(404).json({ message: 'task not found' });
@@ -152,7 +154,11 @@ export async function updateTask(req: GroupScopedRequest, res: Response): Promis
 export async function deleteTask(req: GroupScopedRequest, res: Response): Promise<void> {
   const { id } = req.params;
 
-  const task = await Task.findOneAndDelete({ _id: id, groupId: req.groupId });
+  const task = await Task.findOneAndDelete({
+    _id: id,
+    groupId: req.groupId,
+    $or: [{ assignedTo: req.userId }, { createdBy: req.userId }],
+  });
 
   if (!task) {
     res.status(404).json({ message: 'task not found' });

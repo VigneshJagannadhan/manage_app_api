@@ -2,9 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { User } from '../models/user.model';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 8;
+import { EMAIL_REGEX, MIN_PASSWORD_LENGTH } from '../utils/validators';
 
 async function issueTokens(userId: string, email: string) {
   const accessToken = signAccessToken({ sub: userId, email });
