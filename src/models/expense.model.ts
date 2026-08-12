@@ -29,6 +29,7 @@ export interface IExpense extends Document {
   splits: IExpenseSplit[];
   groupId: string;
   userId: string;
+  essential: boolean;
 }
 
 const payerSchema = new Schema<IExpensePayer>(
@@ -56,6 +57,7 @@ const expenseSchema = new Schema<IExpense>({
   splits: { type: [splitSchema], default: [] },
   groupId: { type: String, required: true },
   userId: { type: String, required: true },
+  essential: { type: Boolean, default: false },
 });
 
 expenseSchema.index({ groupId: 1, createdAt: -1 });
