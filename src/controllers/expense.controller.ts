@@ -41,7 +41,7 @@ function isValidSplits(splits: unknown): boolean {
 }
 
 export async function createExpense(req: GroupScopedRequest, res: Response): Promise<void> {
-  const { title, amount, category, date, payer, splits } = req.body;
+  const { title, amount, category, date, payer, splits, essential } = req.body;
   const groupId = req.groupId as string;
 
   if (title !== undefined && typeof title !== 'string') {
@@ -100,6 +100,11 @@ export async function createExpense(req: GroupScopedRequest, res: Response): Pro
     return;
   }
 
+  if (essential !== undefined && typeof essential !== 'boolean') {
+    res.status(400).json({ message: 'essential must be a boolean' });
+    return;
+  }
+
   const resolvedPayer: IExpensePayer = payer ?? { userId: req.userId as string };
   const resolvedSplits: IExpenseSplit[] = splits ?? [];
 
@@ -118,6 +123,7 @@ export async function createExpense(req: GroupScopedRequest, res: Response): Pro
     userId: req.userId,
     payer: resolvedPayer,
     splits: resolvedSplits,
+    essential: essential ?? false,
   });
 
   res.status(201).json(expense);
@@ -158,7 +164,7 @@ export async function listExpenses(req: AuthenticatedRequest, res: Response): Pr
 
 export async function updateExpense(req: GroupScopedRequest, res: Response): Promise<void> {
   const { id } = req.params;
-  const { title, amount, category, date } = req.body;
+  const { title, amount, category, date, essential } = req.body;
   const groupId = req.groupId;
 
   if (title !== undefined && typeof title !== 'string') {
@@ -205,11 +211,17 @@ export async function updateExpense(req: GroupScopedRequest, res: Response): Pro
     }
   }
 
+  if (essential !== undefined && typeof essential !== 'boolean') {
+    res.status(400).json({ message: 'essential must be a boolean' });
+    return;
+  }
+
   const update = {
     ...(title !== undefined ? { title } : {}),
     ...(amount !== undefined ? { amount } : {}),
     ...(category !== undefined ? { category } : {}),
     ...(parsedDate !== undefined ? { date: parsedDate } : {}),
+    ...(essential !== undefined ? { essential } : {}),
   };
 
   const expense = await Expense.findOneAndUpdate({ _id: id, groupId }, update, {
@@ -223,6 +235,86 @@ export async function updateExpense(req: GroupScopedRequest, res: Response): Pro
   }
 
   res.status(200).json(expense);
+}
+
+export async function getMonthlyGroupSummary(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const { groupId, month, year } = req.query;
+
+  if (groupId !== undefined && typeof groupId !== 'string') {
+    res.status(400).json({ message: 'groupId must be a string' });
+    return;
+  }
+
+  const now = new Date();
+  let resolvedMonth = now.getUTCMonth() + 1;
+  let resolvedYear = now.getUTCFullYear();
+
+  if (month !== undefined) {
+    if (typeof month !== 'string' || !/^\d+$/.test(month)) {
+      res.status(400).json({ message: 'month must be a number between 1 and 12' });
+      return;
+    }
+    resolvedMonth = parseInt(month, 10);
+    if (resolvedMonth < 1 || resolvedMonth > 12) {
+      res.status(400).json({ message: 'month must be a number between 1 and 12' });
+      return;
+    }
+  }
+
+  if (year !== undefined) {
+    if (typeof year !== 'string' || !/^\d+$/.test(year)) {
+      res.status(400).json({ message: 'year must be a valid number' });
+      return;
+    }
+    resolvedYear = parseInt(year, 10);
+  }
+
+  let groupFilter: Record<string, unknown>;
+  if (groupId !== undefined) {
+    if (!(await isGroupMember(groupId, req.userId as string))) {
+      res.status(403).json({ message: 'you are not a member of this group' });
+      return;
+    }
+    groupFilter = { groupId };
+  } else {
+    groupFilter = { groupId: { $in: await getUserGroupIds(req.userId as string) } };
+  }
+
+  const rangeStart = new Date(Date.UTC(resolvedYear, resolvedMonth - 1, 1));
+  const rangeEnd = new Date(Date.UTC(resolvedYear, resolvedMonth, 1));
+
+  const expenses = await Expense.find({
+    ...groupFilter,
+    date: { $gte: rangeStart, $lt: rangeEnd },
+  }).lean();
+
+  const categoryTotals = Object.values(ExpenseCategory).reduce(
+    (totals, category) => ({ ...totals, [category]: 0 }),
+    {} as Record<ExpenseCategory, number>,
+  );
+
+  let totalAmount = 0;
+  let essentialAmount = 0;
+  let nonEssentialAmount = 0;
+
+  for (const expense of expenses) {
+    totalAmount += expense.amount;
+    categoryTotals[expense.category] += expense.amount;
+    if (expense.essential) {
+      essentialAmount += expense.amount;
+    } else {
+      nonEssentialAmount += expense.amount;
+    }
+  }
+
+  res.status(200).json({
+    month: resolvedMonth,
+    year: resolvedYear,
+    totalAmount,
+    essentialAmount,
+    nonEssentialAmount,
+    categoryTotals,
+  });
 }
 
 export async function deleteExpense(req: GroupScopedRequest, res: Response): Promise<void> {

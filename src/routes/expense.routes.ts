@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { createExpense, listExpenses, updateExpense, deleteExpense } from '../controllers/expense.controller';
+import {
+  createExpense,
+  listExpenses,
+  updateExpense,
+  deleteExpense,
+  getMonthlyGroupSummary,
+} from '../controllers/expense.controller';
 import { asyncHandler } from '../utils/asyncHandler';
 import { authenticate } from '../middleware/auth.middleware';
 import { requireGroupMembership, requireGroupMembershipForResource } from '../middleware/group.middleware';
@@ -16,6 +22,7 @@ const requireExpenseGroupMembership = requireGroupMembershipForResource(async (r
 
 router.post('/', requireGroupMembership, asyncHandler(createExpense));
 router.get('/', asyncHandler(listExpenses));
+router.get('/summary/monthly', asyncHandler(getMonthlyGroupSummary));
 router.patch('/:id', requireExpenseGroupMembership, asyncHandler(updateExpense));
 router.delete('/:id', requireExpenseGroupMembership, asyncHandler(deleteExpense));
 
