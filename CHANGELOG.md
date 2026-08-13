@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.0.0...v1.0.1) (2026-08-13)
+
+
+### Reverts
+
+* Revert "fix(ci): bump Node to 22 in build/release jobs for semantic-release" ([b89236a](https://github.com/VigneshJagannadhan/manage_app_api/commit/b89236ac490b1786a45225e4c22acb2c908ff30e))
+
 # 1.0.0 (2026-08-13)
 
 
