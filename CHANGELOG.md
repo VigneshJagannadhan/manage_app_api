@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.0.1...v1.1.0) (2026-08-13)
+
+
+### Features
+
+* add group update/delete and default group preference ([404e08f](https://github.com/VigneshJagannadhan/manage_app_api/commit/404e08f854a3fc761440c3503f8d92dbf72a30c2))
+
 ## [1.0.1](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.0.0...v1.0.1) (2026-08-13)
 
 
