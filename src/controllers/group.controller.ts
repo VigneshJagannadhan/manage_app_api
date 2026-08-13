@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { Group, generateInviteCode } from '../models/group.model';
 import { Membership, MembershipRole } from '../models/membership.model';
 import { User } from '../models/user.model';
+import { Expense } from '../models/expense.model';
+import { Task } from '../models/task.model';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { GroupScopedRequest } from '../middleware/group.middleware';
 
@@ -94,6 +96,62 @@ export async function joinGroup(req: AuthenticatedRequest, res: Response): Promi
     }
     throw err;
   }
+}
+
+export async function updateGroup(req: GroupScopedRequest, res: Response): Promise<void> {
+  const { name } = req.body;
+  const groupId = req.groupId as string;
+
+  if (name !== undefined && typeof name !== 'string') {
+    res.status(400).json({ message: 'name must be a string' });
+    return;
+  }
+
+  if (!name || !name.trim()) {
+    res.status(422).json({ message: 'name is required' });
+    return;
+  }
+
+  const membership = await Membership.findOne({ groupId, userId: req.userId }).lean();
+  if (!membership || membership.role !== MembershipRole.OWNER) {
+    res.status(403).json({ message: 'only the group owner can update this group' });
+    return;
+  }
+
+  const group = await Group.findByIdAndUpdate(groupId, { name }, { new: true, runValidators: true });
+
+  if (!group) {
+    res.status(404).json({ message: 'group not found' });
+    return;
+  }
+
+  res.status(200).json(group);
+}
+
+export async function deleteGroup(req: GroupScopedRequest, res: Response): Promise<void> {
+  const groupId = req.groupId as string;
+
+  const membership = await Membership.findOne({ groupId, userId: req.userId }).lean();
+  if (!membership || membership.role !== MembershipRole.OWNER) {
+    res.status(403).json({ message: 'only the group owner can delete this group' });
+    return;
+  }
+
+  const group = await Group.findByIdAndDelete(groupId);
+
+  if (!group) {
+    res.status(404).json({ message: 'group not found' });
+    return;
+  }
+
+  await Promise.all([
+    Membership.deleteMany({ groupId }),
+    Expense.deleteMany({ groupId }),
+    Task.deleteMany({ groupId }),
+    User.updateMany({ defaultGroupId: groupId }, { $unset: { defaultGroupId: '' } }),
+  ]);
+
+  res.status(204).send();
 }
 
 export async function listGroupMembers(req: GroupScopedRequest, res: Response): Promise<void> {

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { User } from '../models/user.model';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { EMAIL_REGEX, PHONE_REGEX, MIN_PASSWORD_LENGTH } from '../utils/validators';
+import { isGroupMember } from '../utils/membership';
 
 export async function getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   const user = await User.findById(req.userId);
@@ -11,7 +12,13 @@ export async function getProfile(req: AuthenticatedRequest, res: Response): Prom
     return;
   }
 
-  res.status(200).json({ id: user.id, name: user.name, email: user.email, phone: user.phone ?? null });
+  res.status(200).json({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone ?? null,
+    defaultGroupId: user.defaultGroupId ?? null,
+  });
 }
 
 export async function updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -54,7 +61,36 @@ export async function updateProfile(req: AuthenticatedRequest, res: Response): P
     return;
   }
 
-  res.status(200).json({ id: user.id, name: user.name, email: user.email, phone: user.phone ?? null });
+  res.status(200).json({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone ?? null,
+    defaultGroupId: user.defaultGroupId ?? null,
+  });
+}
+
+export async function setDefaultGroup(req: AuthenticatedRequest, res: Response): Promise<void> {
+  const { groupId } = req.body;
+
+  if (!groupId || typeof groupId !== 'string') {
+    res.status(400).json({ message: 'groupId is required' });
+    return;
+  }
+
+  if (!(await isGroupMember(groupId, req.userId as string))) {
+    res.status(403).json({ message: 'you are not a member of this group' });
+    return;
+  }
+
+  const user = await User.findByIdAndUpdate(req.userId, { defaultGroupId: groupId }, { new: true });
+
+  if (!user) {
+    res.status(404).json({ message: 'user not found' });
+    return;
+  }
+
+  res.status(200).json({ defaultGroupId: user.defaultGroupId });
 }
 
 export async function changePassword(req: AuthenticatedRequest, res: Response): Promise<void> {
