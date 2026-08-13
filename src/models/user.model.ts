@@ -7,6 +7,7 @@ export interface IUser extends Document {
   password: string;
   phone?: string;
   refreshToken?: string;
+  defaultGroupId?: string;
   createdAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
@@ -17,6 +18,7 @@ const userSchema = new Schema<IUser>({
   password: { type: String, required: true },
   phone: { type: String, required: false, trim: true },
   refreshToken: { type: String, required: false, select: false },
+  defaultGroupId: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
 });
 
