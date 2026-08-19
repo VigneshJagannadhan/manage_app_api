@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.1.0...v1.2.0) (2026-08-19)
+
+
+### Features
+
+* add journal endpoints and createdAt to profile ([34f1c02](https://github.com/VigneshJagannadhan/manage_app_api/commit/34f1c02b4f13c329e2b0cd03de0f259beb7ba6e3))
+
 # [1.1.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.0.1...v1.1.0) (2026-08-13)
 
 
