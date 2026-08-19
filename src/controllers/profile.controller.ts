@@ -18,6 +18,7 @@ export async function getProfile(req: AuthenticatedRequest, res: Response): Prom
     email: user.email,
     phone: user.phone ?? null,
     defaultGroupId: user.defaultGroupId ?? null,
+    createdAt: user.createdAt,
   });
 }
 
@@ -67,6 +68,7 @@ export async function updateProfile(req: AuthenticatedRequest, res: Response): P
     email: user.email,
     phone: user.phone ?? null,
     defaultGroupId: user.defaultGroupId ?? null,
+    createdAt: user.createdAt,
   });
 }
 

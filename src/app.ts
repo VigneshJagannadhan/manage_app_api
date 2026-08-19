@@ -5,6 +5,7 @@ import healthRoutes from './routes/health.routes';
 import authRoutes from './routes/auth.routes';
 import groupRoutes from './routes/group.routes';
 import profileRoutes from './routes/profile.routes';
+import journalRoutes from './routes/journal.routes';
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/journals', journalRoutes);
 
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(`Unhandled error on ${req.method} ${req.originalUrl}:`, err.stack || err);
