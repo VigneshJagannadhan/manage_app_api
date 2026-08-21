@@ -29,6 +29,10 @@ function startOfTodayUTC(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
+// UTC+14 (e.g. Kiribati) is the furthest-ahead timezone in real-world use, so a
+// user's local calendar date can be at most one day ahead of the server's UTC date.
+const MAX_UTC_OFFSET_MS = 14 * 60 * 60 * 1000;
+
 export async function listJournals(req: AuthenticatedRequest, res: Response): Promise<void> {
   const { from, to } = req.query;
 
@@ -62,7 +66,7 @@ export async function upsertJournal(req: AuthenticatedRequest, res: Response): P
     return;
   }
 
-  if (day.getTime() > startOfTodayUTC().getTime()) {
+  if (day.getTime() > startOfTodayUTC().getTime() + MAX_UTC_OFFSET_MS) {
     res.status(400).json({ message: 'date cannot be in the future' });
     return;
   }
