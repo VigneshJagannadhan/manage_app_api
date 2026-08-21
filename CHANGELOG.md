@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.2.0...v1.2.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* relax journal future-date check for non-UTC timezones ([3a5d5ce](https://github.com/VigneshJagannadhan/manage_app_api/commit/3a5d5ce3406a3ec02939bce238a6d559615b30ed))
+
 # [1.2.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.1.0...v1.2.0) (2026-08-19)
 
 
