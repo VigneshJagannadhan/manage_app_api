@@ -8,6 +8,7 @@ export interface INotificationPreferences {
   expenseReminderEnabled: boolean;
   journalReminderTime: string | null;
   expenseReminderTime: string | null;
+  timezone: string | null;
 }
 
 export interface IUser extends Document {
@@ -30,6 +31,7 @@ const notificationPreferencesSchema = new Schema<INotificationPreferences>(
     expenseReminderEnabled: { type: Boolean, required: true, default: true },
     journalReminderTime: { type: String, required: false, default: '20:00' },
     expenseReminderTime: { type: String, required: false, default: '21:00' },
+    timezone: { type: String, required: false, default: null },
   },
   { _id: false },
 );
