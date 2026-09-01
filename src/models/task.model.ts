@@ -13,7 +13,7 @@ export enum TaskStatus {
 
 export interface ITask extends Document {
   title: string;
-  description: string;
+  description?: string;
   priority: TaskPriority;
   status: TaskStatus;
   dueDate?: Date;
@@ -26,7 +26,7 @@ export interface ITask extends Document {
 
 const taskSchema = new Schema<ITask>({
   title: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String, required: false },
   priority: { type: String, enum: Object.values(TaskPriority), required: true },
   status: { type: String, enum: Object.values(TaskStatus), required: true, default: TaskStatus.OPEN },
   dueDate: { type: Date, required: false },
