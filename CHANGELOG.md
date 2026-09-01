@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.3.0...v1.3.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* schedule reminders before they are due and honor user timezone ([8fe49a7](https://github.com/VigneshJagannadhan/manage_app_api/commit/8fe49a7255f8a60dabca65b5c232027a628b269e))
+
 # [1.3.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.2.1...v1.3.0) (2026-09-01)
 
 
