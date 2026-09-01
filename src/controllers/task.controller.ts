@@ -14,8 +14,8 @@ export async function createTask(req: GroupScopedRequest, res: Response): Promis
   const { title, description, priority, status, createdAt, dueDate, dueTime, assignedTo } = req.body;
   const groupId = req.groupId as string;
 
-  if (!title || !description || !priority) {
-    res.status(400).json({ message: 'title, description and priority are required' });
+  if (!title || !priority) {
+    res.status(400).json({ message: 'title and priority are required' });
     return;
   }
 
@@ -48,11 +48,11 @@ export async function createTask(req: GroupScopedRequest, res: Response): Promis
 
   const task = await Task.create({
     title,
-    description,
     priority,
     groupId,
     createdBy: req.userId,
     assignedTo: resolvedAssignee,
+    ...(description ? { description } : {}),
     ...(status ? { status } : {}),
     ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
     ...(dueDate ? { dueDate: new Date(dueDate) } : {}),
