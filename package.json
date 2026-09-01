@@ -1,6 +1,6 @@
 {
   "name": "manage-app-api",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Node.js + Express + MongoDB API in TypeScript",
   "main": "dist/index.js",
   "scripts": {

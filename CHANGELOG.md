@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.3.1...v1.4.0) (2026-09-01)
+
+
+### Features
+
+* make task description optional on create ([22df94d](https://github.com/VigneshJagannadhan/manage_app_api/commit/22df94d1bf792ee25e171a5c5d985e5977864b8c))
+
 ## [1.3.1](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.3.0...v1.3.1) (2026-09-01)
 
 
