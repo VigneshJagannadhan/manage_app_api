@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.2.1...v1.3.0) (2026-09-01)
+
+
+### Features
+
+* add notifications schedule and preferences endpoints ([3056b1e](https://github.com/VigneshJagannadhan/manage_app_api/commit/3056b1efc65c5c20fedd43505b2b176998bef31b))
+
 ## [1.2.1](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.2.0...v1.2.1) (2026-08-21)
 
 
