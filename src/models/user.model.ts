@@ -47,6 +47,8 @@ const userSchema = new Schema<IUser>({
   createdAt: { type: Date, default: Date.now },
 });
 
+userSchema.index({ phone: 1 }, { sparse: true });
+
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     next();
