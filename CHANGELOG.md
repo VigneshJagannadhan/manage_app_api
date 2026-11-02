@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.4.0...v1.5.0) (2026-11-02)
+
+
+### Features
+
+* add account deletion endpoints ([88b5e57](https://github.com/VigneshJagannadhan/manage_app_api/commit/88b5e57e099f5e89d7c930bd995bbf99554dc136))
+
 # [1.4.0](https://github.com/VigneshJagannadhan/manage_app_api/compare/v1.3.1...v1.4.0) (2026-09-01)
 
 
